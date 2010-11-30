@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no;">
+<title>Bubbles on Moving Canvas</title>
+<style>
+body {
+	margin: 0px;
+	padding: 0px;
+}
+#window{
+	width: 320px;
+	height: 300px;
+	overflow: hidden;
+}
+
+#container{
+	position: relative;
+}
+
+button {
+	background-color: rgba(0,0,0,1);
+	color: #fff;
+	-webkit-border-radius: 15px;
+}
+
+section{
+	position: relative;
+	
+}
+
+#mark_canvas{
+	opacity: 0.98;
+	z-index: 5;
+}
+
+#main_canvas {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 1;
+}
+
+.move_left{
+
+	top: 160;
+	left: 10;
+	z-index: 100;
+}
+
+.move_right{
+	position: absolute;
+	top: 160;
+	right: 10;
+	z-index: 100;
+}
+
+
+</style>
+</head>
+<body>
+<section>
+<div id="window">
+	<div id="container">
+	<canvas id="mark_canvas" width="800px" height="300px"></canvas>
+	<canvas id="main_canvas" width="800px" height="300px">
+		<p>you're browser does not support canvas</p>
+	</canvas>
+	</div><!--end container-->
+</div> <!--end window-->
+<button class="move_left"><-</button>
+<button class="move_right">-></button>
+</section>
+
+<script src="jquery.js"></script>
+<script>
+$(function(){
+	const FPS = 24;
+	var canvas = document.getElementById('main_canvas');
+	var c = canvas.getContext('2d');
+	var i =5;
+	var interval = null;
+	var canvas_counter = 0;	//new canvas # 
+	var window_position = 0; //tracks scrollLeft value of #window
+	var new_canvas; //placeholder for new canvas name
+	var h; //place holder for different heights
+	var startPoint; //starting point for stem
+
+	setBg();
+	
+	window.onload = resize();
+	window.addEventListener('orientationchange', resize, false);
+	canvas.addEventListener("mousedown", mark, false);
+	canvas.addEventListener("touchstart", touchMark, false)
+
+
+	//slider button controls
+	$('.move_left').attr('disabled' , 'disabled').css('background-color', 'rgba(0,0,0,0.5)');
+
+	$('.move_left').click(function(){
+		window_position = 0;
+		$('#window').animate({scrollLeft : window_position}, 500);
+		$('.move_left').attr('disabled' , 'disabled').css('background-color', 'rgba(0,0,0,0.5)');
+		$('.move_right').removeAttr('disabled').css('background-color', 'rgba(0,0,0,1)');
+	});
+
+	$('.move_right').click(function(){
+		window_position = 400;
+		$('#window').animate({scrollLeft : window_position}, 500);
+		$('.move_right').attr('disabled' , 'disabled').css('background-color', 'rgba(0,0,0,0.5)');
+		$('.move_left').removeAttr('disabled').css('background-color', 'rgba(0,0,0,1)');
+	});
+	//end button controls
+
+	function resize(){
+		switch(window.orientation){
+			case 0:
+			case 180:
+				$('#window').css({'width' : '300px',});
+			break;
+		
+			case 90:
+			case -90:
+				$('#window').css({'width' : '480px',});
+			break;
+		}
+	}
+	
+	function setBg(){
+		var bg = new Image();
+		var currentTime = new Date();
+		var hour = currentTime.getHours();
+		if(hour < 7 || hour >= 20){
+			bg.src = 'bg-night.jpg';
+		} else if(hour >= 7 && hour <= 10){
+			bg.src = 'bg-morning.jpg';
+		} else if(hour >= 11 && hour <= 16){
+			bg.src = 'bg-day.jpg';
+		}else if(hour >16 && hour < 20){
+			bg.src = 'bg-evening.jpg';
+		}
+		
+		bg.onload = function(){
+			c.drawImage(bg, 0, 0, 800, 300); //adds background image
+		};
+	}
+
+	function mark(e){
+		if (interval == null){
+			var x = e.layerX; //get x coord from mouse
+			var y = e.layerY; //get y coord from mouse
+			h = 300-y; //determine height by subtracting y-axis from canvas height
+			canvas_counter++;
+			new_canvas = 'bubble'+canvas_counter; //name of new canvas
+			$('#container').append('<canvas id="'+new_canvas+'" width="100px" height="'+h+'px" style="z-index: 2;"></canvas>');		
+			$('#'+new_canvas).css({
+									'position' : 'absolute',
+									'bottom' : 5,
+									'left' : x-75,
+								});	
+			var dot_canvas = document.getElementById(new_canvas);
+			c = dot_canvas.getContext('2d');
+			color = '#' + (~~(Math.random() * 16777215)).toString(16); //generate random hex color value
+			startPoint = h;
+			interval = setInterval(makeDot, 1000/FPS);
+		} else {
+			return false;
+		}
+	}
+	
+	function touchMark(e){
+		if (interval == null){
+			var touch = e.touches[0]; //get the touch coordinates for mobile safari
+			var x = touch.pageX; //get x coord from mouse
+			var y = touch.pageY; //get y coord from mouse
+			h = 300-y; //determine height by subtracting y-axis from canvas height
+			canvas_counter++;
+			new_canvas = 'bubble'+canvas_counter; //name of new canvas
+			$('#container').append('<canvas id="'+new_canvas+'" width="100px" height="'+h+'px" style="z-index: 2;"></canvas>');		
+			$('#'+new_canvas).css({
+									'position' : 'absolute',
+									'bottom' : 5,
+									'left' : x-75,
+								});	
+			var dot_canvas = document.getElementById(new_canvas);
+			c = dot_canvas.getContext('2d');
+			color = '#' + (~~(Math.random() * 16777215)).toString(16); //generate random hex color value
+			startPoint = h;
+			interval = setInterval(makeDot, 1000/FPS);
+		} else {
+			return false;
+		}
+	}
+
+	var makeDot = function(){
+			if (h >100){ //check height of new canvas box
+				stem_p = Math.ceil((h-50)/50); //determine and set stem growth rate
+			} else {
+				stem_p= i; //set growth rate to 1 if less height less than 100
+			}
+			startPoint = startPoint-stem_p;
+			c.fillStyle= 'green';
+			c.fillRect(40, startPoint, 15, (stem_p*i)); //draw stem peice
+			i ++;
+		if(i==50){ //once stem is drawn, place flower on top and reset
+			var flower = new Image();
+			flower.src = "orange_flower.png";
+			c.drawImage(flower,0,0,100,100);
+			// c.fillStyle=color;
+			// 		c.beginPath();
+			// 		c.arc(50, 50, i, 0, Math.PI*2);
+			// 		c.closePath();
+			// 		c.fill();
+			clearInterval(interval);
+			i=5;
+			interval = null;
+		}
+	}
+});
+
+</script>
+</body>
+</html>
