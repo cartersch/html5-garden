@@ -79,14 +79,16 @@ $(function(){
 	const FPS = 24;
 	var canvas = document.getElementById('main_canvas');
 	var c = canvas.getContext('2d');
+	var x;
+	var y;
 	var i =5;
 	var interval = null;
 	var canvas_counter = 0;	//new canvas # 
 	var window_position = 0; //tracks scrollLeft value of #window
 	var new_canvas; //placeholder for new canvas name
 	var h; //place holder for different heights
-	var startPoint; //starting point for stem
-
+	var startPoint = 300; //starting point for stem
+	
 	setBg();
 	
 	window.onload = resize();
@@ -127,7 +129,7 @@ $(function(){
 		}
 	}
 	
-	function setBg(){
+	function setBg(){ //set background image based on time of day
 		var bg = new Image();
 		var currentTime = new Date();
 		var hour = currentTime.getHours();
@@ -148,22 +150,11 @@ $(function(){
 
 	function mark(e){
 		if (interval == null){
-			var x = e.layerX; //get x coord from mouse
-			var y = e.layerY; //get y coord from mouse
+			x = e.layerX; //get x coord from mouse
+			y = e.layerY; //get y coord from mouse
 			h = 300-y; //determine height by subtracting y-axis from canvas height
-			canvas_counter++;
-			new_canvas = 'bubble'+canvas_counter; //name of new canvas
-			$('#container').append('<canvas id="'+new_canvas+'" width="100px" height="'+h+'px" style="z-index: 2;"></canvas>');		
-			$('#'+new_canvas).css({
-									'position' : 'absolute',
-									'bottom' : 5,
-									'left' : x-75,
-								});	
-			var dot_canvas = document.getElementById(new_canvas);
-			c = dot_canvas.getContext('2d');
-			color = '#' + (~~(Math.random() * 16777215)).toString(16); //generate random hex color value
-			startPoint = h;
-			interval = setInterval(makeDot, 1000/FPS);
+			console.log('X: '+x+', Y:'+y+', Startpoint: '+startPoint);
+			interval = setInterval(makeFlower, 1000/FPS);
 		} else {
 			return false;
 		}
@@ -172,48 +163,29 @@ $(function(){
 	function touchMark(e){
 		if (interval == null){
 			var touch = e.touches[0]; //get the touch coordinates for mobile safari
-			var x = touch.pageX; //get x coord from mouse
-			var y = touch.pageY; //get y coord from mouse
+			x = touch.pageX; //get x coord from mouse
+			y = touch.pageY; //get y coord from mouse
 			h = 300-y; //determine height by subtracting y-axis from canvas height
-			canvas_counter++;
-			new_canvas = 'bubble'+canvas_counter; //name of new canvas
-			$('#container').append('<canvas id="'+new_canvas+'" width="100px" height="'+h+'px" style="z-index: 2;"></canvas>');		
-			$('#'+new_canvas).css({
-									'position' : 'absolute',
-									'bottom' : 5,
-									'left' : x-75,
-								});	
-			var dot_canvas = document.getElementById(new_canvas);
-			c = dot_canvas.getContext('2d');
-			color = '#' + (~~(Math.random() * 16777215)).toString(16); //generate random hex color value
-			startPoint = h;
 			interval = setInterval(makeDot, 1000/FPS);
 		} else {
 			return false;
 		}
 	}
 
-	var makeDot = function(){
-			if (h >100){ //check height of new canvas box
-				stem_p = Math.ceil((h-50)/50); //determine and set stem growth rate
-			} else {
-				stem_p= i; //set growth rate to 1 if less height less than 100
-			}
+	var makeFlower = function(){
+			stem_p = Math.ceil((h-50)/50); //determine and set stem growth rate
 			startPoint = startPoint-stem_p;
+			console.log('start: '+startPoint+', '+stem_p);
 			c.fillStyle= 'green';
-			c.fillRect(40, startPoint, 15, (stem_p*i)); //draw stem peice
+			c.fillRect(x, startPoint, 15, (stem_p*i)); //draw stem peice
 			i ++;
 		if(i==50){ //once stem is drawn, place flower on top and reset
 			var flower = new Image();
 			flower.src = "orange_flower.png";
-			c.drawImage(flower,0,0,100,100);
-			// c.fillStyle=color;
-			// 		c.beginPath();
-			// 		c.arc(50, 50, i, 0, Math.PI*2);
-			// 		c.closePath();
-			// 		c.fill();
+			c.drawImage(flower,(x-40),(y-40),100,100);
 			clearInterval(interval);
 			i=5;
+			startPoint = 300;
 			interval = null;
 		}
 	}
